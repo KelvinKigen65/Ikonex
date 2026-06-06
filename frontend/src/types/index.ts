@@ -1,4 +1,4 @@
-export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'TEACHER';
+export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'TEACHER' | 'STUDENT';
 export type Gender = 'MALE' | 'FEMALE';
 export type AssessmentType = 'CAT1' | 'CAT2' | 'ASSIGNMENT' | 'MIDTERM' | 'END_TERM';
 export type SubjectStatus = 'ACTIVE' | 'INACTIVE';
@@ -9,6 +9,7 @@ export interface User {
   firstName: string;
   lastName: string;
   role: Role;
+  isActive?: boolean;
   createdAt: string;
 }
 
@@ -38,6 +39,43 @@ export interface Student {
   classStream: { id: string; name: string };
   isActive: boolean;
   createdAt: string;
+}
+
+export interface StudentPerformanceScore {
+  id: string;
+  marks: number;
+  remarks?: string;
+  createdAt: string;
+  assessment: {
+    id: string;
+    name: string;
+    type: AssessmentType;
+    term: string;
+    academicYear: string;
+    maxMarks: number;
+    subject: {
+      id: string;
+      name: string;
+      code: string;
+    };
+  };
+}
+
+export interface StudentReportSummary {
+  id: string;
+  term: string;
+  academicYear: string;
+  totalMarks: number;
+  averageScore: number;
+  grade: string;
+  position: number;
+  totalStudents: number;
+  generatedAt: string;
+}
+
+export interface StudentDetailRecord extends Student {
+  scores: StudentPerformanceScore[];
+  reportCards: StudentReportSummary[];
 }
 
 export interface Subject {
@@ -95,6 +133,50 @@ export interface StudentResult {
   position: number;
 }
 
+export interface StudentReportCard {
+  student: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    admissionNo: string;
+    streamName: string;
+    academicYear: string;
+  };
+  report: StudentResult & {
+    term: string;
+    academicYear: string;
+    totalStudents: number;
+    generatedAt: string;
+  };
+}
+
+export interface ClassPerformanceReport {
+  stream: {
+    id: string;
+    name: string;
+    academicYear: string;
+  };
+  term: string;
+  academicYear: string;
+  generatedAt: string;
+  totalStudents: number;
+  topPerformer: {
+    studentId: string;
+    studentName: string;
+    averageScore: number;
+    meanGrade: string;
+    position: number;
+  } | null;
+  subjectPerformance: Array<{
+    subjectId: string;
+    subjectName: string;
+    averageScore: number;
+    highestScore: number;
+    lowestScore: number;
+  }>;
+  results: StudentResult[];
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   total: number;
@@ -106,4 +188,13 @@ export interface DashboardStats {
   stats: { totalStudents: number; totalStreams: number; totalSubjects: number };
   subjectPerformance: { name: string; average: number; count: number }[];
   recentActivity: any[];
+}
+
+export interface GradingScale {
+  id: string;
+  grade: string;
+  minScore: number;
+  maxScore: number;
+  points: number;
+  remarks: string;
 }

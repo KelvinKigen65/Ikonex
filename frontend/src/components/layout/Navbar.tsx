@@ -1,6 +1,7 @@
 import { Menu, Bell, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { formatRoleLabel } from '@/lib/roles';
 
 interface Props { onMenuClick: () => void; }
 
@@ -36,7 +37,7 @@ const Navbar = ({ onMenuClick }: Props) => {
           </div>
           <div className="hidden sm:block text-sm">
             <p className="font-medium text-gray-800">{user?.firstName} {user?.lastName}</p>
-            <p className="text-xs text-gray-500">{user?.role?.replace('_', ' ')}</p>
+            <p className="text-xs text-gray-500">{user?.role ? formatRoleLabel(user.role) : ''}</p>
           </div>
           <button
             onClick={handleLogout}

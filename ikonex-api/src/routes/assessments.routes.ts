@@ -6,11 +6,11 @@ import { authorize } from '../middleware/role.middleware';
 const router = Router();
 router.use(authenticate);
 
-router.get('/', getAssessments);
+router.get('/', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), getAssessments);
 router.post('/', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), createAssessment);
 router.put('/:id', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), updateAssessment);
 router.delete('/:id', authorize('SUPER_ADMIN', 'ADMIN'), deleteAssessment);
 router.post('/scores/bulk', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), bulkSubmitScores);
-router.get('/:assessmentId/scores', getScores);
+router.get('/:assessmentId/scores', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), getScores);
 
 export default router;

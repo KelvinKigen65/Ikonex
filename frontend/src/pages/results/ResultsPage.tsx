@@ -19,6 +19,7 @@ const gradeColor = (g: string): 'green' | 'blue' | 'yellow' | 'red' | 'gray' => 
 const ResultsPage = () => {
   const [streams, setStreams] = useState<ClassStream[]>([]);
   const [results, setResults] = useState<StudentResult[]>([]);
+  const [selectedSubjectId, setSelectedSubjectId] = useState('');
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({ streamId: '', term: 'Term 1', academicYear: '2024' });
   const [searched, setSearched] = useState(false);
@@ -31,6 +32,7 @@ const ResultsPage = () => {
     try {
       const res = await getResults(filters);
       setResults(res.data.results);
+      setSelectedSubjectId('');
       setSearched(true);
     } catch { toast.error('Failed to process results'); }
     finally { setLoading(false); }
@@ -40,6 +42,26 @@ const ResultsPage = () => {
     name: r.studentName.split(' ')[0],
     average: Math.round(r.averageScore * 10) / 10,
   }));
+  const availableSubjects = Array.from(new Map(
+    results.flatMap(result => result.subjects).map(subject => [subject.subjectId, { id: subject.subjectId, name: subject.subjectName }])
+  ).values());
+  const selectedSubjectPerformance = selectedSubjectId
+    ? results
+        .map(result => {
+          const subject = result.subjects.find(entry => entry.subjectId === selectedSubjectId);
+          if (!subject) return null;
+          return {
+            studentId: result.studentId,
+            studentName: result.studentName,
+            admissionNo: result.admissionNo,
+            score: subject.score,
+            grade: subject.grade,
+            position: subject.position,
+          };
+        })
+        .filter((value): value is NonNullable<typeof value> => Boolean(value))
+        .sort((a, b) => a.position - b.position)
+    : [];
 
   return (
     <div>
@@ -136,6 +158,57 @@ const ResultsPage = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          <div className="card mt-6">
+            <div className="flex items-end gap-3 flex-col sm:flex-row sm:justify-between">
+              <div>
+                <h2 className="text-base font-semibold text-gray-800">Subject Performance</h2>
+                <p className="text-sm text-gray-500 mt-1">View class performance for a selected subject.</p>
+              </div>
+              <div className="w-full sm:w-72">
+                <label className="block text-xs font-medium text-gray-600 mb-1">Subject</label>
+                <select className="input" value={selectedSubjectId} onChange={e => setSelectedSubjectId(e.target.value)}>
+                  <option value="">Select subject...</option>
+                  {availableSubjects.map(subject => (
+                    <option key={subject.id} value={subject.id}>{subject.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {selectedSubjectId ? (
+              selectedSubjectPerformance.length > 0 ? (
+                <div className="overflow-x-auto mt-4">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Pos</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Student</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Adm No</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Score</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Grade</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedSubjectPerformance.map(item => (
+                        <tr key={item.studentId} className="border-b border-gray-50">
+                          <td className="px-4 py-3 font-semibold text-gray-800">{item.position}</td>
+                          <td className="px-4 py-3">{item.studentName}</td>
+                          <td className="px-4 py-3 text-gray-500">{item.admissionNo}</td>
+                          <td className="px-4 py-3">{item.score.toFixed(1)}%</td>
+                          <td className="px-4 py-3">{item.grade}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400 mt-4">No scores recorded for that subject yet.</p>
+              )
+            ) : (
+              <p className="text-sm text-gray-400 mt-4">Process results and select a subject to inspect class performance.</p>
+            )}
           </div>
         </>
       )}

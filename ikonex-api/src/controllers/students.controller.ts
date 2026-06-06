@@ -9,13 +9,13 @@ export const getStudents = async (req: Request, res: Response, next: NextFunctio
     const skip = (Number(page) - 1) * Number(limit);
 
     const where: any = { isActive: true };
-    if (streamId) where.streamId = String(streamId);
-    if (gender) where.gender = String(gender);
-    if (search) {
+    if (typeof streamId === 'string') where.streamId = streamId;
+    if (typeof gender === 'string') where.gender = gender;
+    if (typeof search === 'string') {
       where.OR = [
-        { firstName: { contains: String(search), mode: 'insensitive' } },
-        { lastName: { contains: String(search), mode: 'insensitive' } },
-        { admissionNo: { contains: String(search), mode: 'insensitive' } },
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { admissionNo: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -38,8 +38,11 @@ export const getStudents = async (req: Request, res: Response, next: NextFunctio
 
 export const getStudent = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) return res.status(400).json({ error: 'Student id is required' });
+
     const student = await prisma.student.findUnique({
-      where: { id: req.params.id },
+      where: { id },
       include: {
         classStream: true,
         scores: {
@@ -70,8 +73,11 @@ export const createStudent = async (req: Request, res: Response, next: NextFunct
 
 export const updateStudent = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) return res.status(400).json({ error: 'Student id is required' });
+
     const student = await prisma.student.update({
-      where: { id: req.params.id },
+      where: { id },
       data: req.body,
       include: { classStream: { select: { id: true, name: true } } },
     });
@@ -83,8 +89,11 @@ export const updateStudent = async (req: Request, res: Response, next: NextFunct
 
 export const deleteStudent = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) return res.status(400).json({ error: 'Student id is required' });
+
     await prisma.student.update({
-      where: { id: req.params.id },
+      where: { id },
       data: { isActive: false },
     });
     res.json({ message: 'Student deactivated successfully' });

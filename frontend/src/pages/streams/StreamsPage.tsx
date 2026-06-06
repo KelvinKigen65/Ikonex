@@ -17,7 +17,7 @@ const StreamsPage = () => {
   const [form, setForm]           = useState({ name: '', academicYear: '2024', teacherId: '' });
   const [saving, setSaving]       = useState(false);
 
-  const canEdit = user?.role !== 'TEACHER';
+  const canEdit = !!user && user.role !== 'STUDENT';
 
   const load = useCallback(async () => {
     try {

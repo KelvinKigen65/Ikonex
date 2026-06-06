@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Edit2, Mail, MapPin, Phone, User } from 'lucide-react';
+import { ArrowLeft, Edit2, Mail, MapPin, Phone, User, TrendingUp } from 'lucide-react';
 import { getStudent } from '@/api/students.api';
 import PageHeader from '@/components/ui/PageHeader';
 import Badge from '@/components/ui/Badge';
-import type { Student } from '@/types';
+import type { StudentDetailRecord } from '@/types';
+import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 
 const StudentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [student, setStudent] = useState<Student | null>(null);
+  const { user } = useAuth();
+  const [student, setStudent] = useState<StudentDetailRecord | null>(null);
   const [loading, setLoading] = useState(true);
+  const canEdit = !!user && user.role !== 'STUDENT';
 
   useEffect(() => {
     if (!id) return;
@@ -45,11 +48,11 @@ const StudentDetail = () => {
       <PageHeader
         title={`${student.firstName} ${student.lastName}`}
         subtitle={student.admissionNo}
-        actions={(
+        actions={canEdit ? (
           <button onClick={() => navigate(`/students/${student.id}/edit`)} className="btn-primary">
             <Edit2 size={16} /> Edit Student
           </button>
-        )}
+        ) : undefined}
       />
 
       <button onClick={() => navigate('/students')} className="btn-secondary mb-4">
@@ -99,6 +102,69 @@ const StudentDetail = () => {
               <span className="text-gray-700">Created {student.createdAt?.split('T')[0]}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">
+        <div className="card">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp size={18} className="text-primary-600" />
+            <h2 className="font-semibold text-gray-900">Performance By Subject</h2>
+          </div>
+          {student.scores.length === 0 ? (
+            <p className="text-sm text-gray-400">No scores recorded yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {student.scores.map(score => {
+                const percentage = score.assessment.maxMarks > 0
+                  ? (score.marks / score.assessment.maxMarks) * 100
+                  : 0;
+                return (
+                  <div key={score.id} className="rounded-xl border border-gray-100 p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="font-medium text-gray-900">{score.assessment.subject.name}</p>
+                        <p className="text-xs text-gray-400">
+                          {score.assessment.name} • {score.assessment.term} {score.assessment.academicYear}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-primary-700">
+                          {score.marks} / {score.assessment.maxMarks}
+                        </p>
+                        <p className="text-xs text-gray-500">{percentage.toFixed(1)}%</p>
+                      </div>
+                    </div>
+                    {score.remarks ? <p className="text-xs text-gray-500 mt-2">{score.remarks}</p> : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="card">
+          <h2 className="font-semibold text-gray-900 mb-4">Generated Report Cards</h2>
+          {student.reportCards.length === 0 ? (
+            <p className="text-sm text-gray-400">No report cards generated yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {student.reportCards.map(report => (
+                <div key={report.id} className="rounded-xl border border-gray-100 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-medium text-gray-900">{report.term} {report.academicYear}</p>
+                      <p className="text-xs text-gray-400">Generated {report.generatedAt.split('T')[0]}</p>
+                    </div>
+                    <Badge label={`${report.grade} • Pos ${report.position}/${report.totalStudents}`} color="blue" />
+                  </div>
+                  <p className="text-sm text-gray-600 mt-3">
+                    Average {report.averageScore.toFixed(1)}% • Total Marks {report.totalMarks.toFixed(1)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

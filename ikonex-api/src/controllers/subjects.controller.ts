@@ -8,11 +8,13 @@ export const getSubjects = async (req: Request, res: Response, next: NextFunctio
     const { page = 1, limit = 50, search, status } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
     const where: any = {};
-    if (status) where.status = String(status);
-    if (search) where.OR = [
-      { name: { contains: String(search), mode: 'insensitive' } },
-      { code: { contains: String(search), mode: 'insensitive' } },
-    ];
+    if (typeof status === 'string') where.status = status;
+    if (typeof search === 'string') {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { code: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
     const [subjects, total] = await Promise.all([
       prisma.subject.findMany({
@@ -39,8 +41,11 @@ export const createSubject = async (req: Request, res: Response, next: NextFunct
 
 export const updateSubject = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) return res.status(400).json({ error: 'Subject id is required' });
+
     const subject = await prisma.subject.update({
-      where: { id: req.params.id }, data: req.body,
+      where: { id }, data: req.body,
       include: { teacher: { select: { id: true, firstName: true, lastName: true } } },
     });
     res.json({ subject });
@@ -49,7 +54,10 @@ export const updateSubject = async (req: Request, res: Response, next: NextFunct
 
 export const deleteSubject = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await prisma.subject.delete({ where: { id: req.params.id } });
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) return res.status(400).json({ error: 'Subject id is required' });
+
+    await prisma.subject.delete({ where: { id } });
     res.json({ message: 'Subject deleted' });
   } catch (err) { next(err); }
 };

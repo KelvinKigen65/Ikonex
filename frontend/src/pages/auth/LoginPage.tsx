@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { login } from '@/api/auth.api';
@@ -21,7 +21,9 @@ const LoginPage = () => {
       toast.success('Welcome back!');
       navigate('/');
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Login failed');
+      const message = err.response?.data?.error
+        || (err.request ? 'API is unreachable. Start the backend and database.' : 'Login failed');
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -72,6 +74,13 @@ const LoginPage = () => {
           <p className="font-medium mb-1">Demo Credentials:</p>
           <p>Admin: admin@ikonex.ac.ke / Admin@1234</p>
           <p>Teacher: teacher@ikonex.ac.ke / Teacher@1234</p>
+        </div>
+
+        <div className="mt-5 text-sm text-center text-gray-500">
+          Need an account?{' '}
+          <Link to="/signup" className="font-medium text-primary-600 hover:text-primary-700">
+            Create one here
+          </Link>
         </div>
       </div>
     </div>

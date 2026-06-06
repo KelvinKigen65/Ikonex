@@ -34,6 +34,10 @@ async function main() {
     },
   });
 
+  await prisma.user.deleteMany({
+    where: { email: 'student@ikonex.ac.ke' },
+  });
+
   // Create grading scale
   const gradingData = [
     { grade: 'A',  minScore: 80, maxScore: 100, points: 12, remarks: 'Excellent' },

@@ -6,10 +6,10 @@ import { authorize } from '../middleware/role.middleware';
 const router = Router();
 router.use(authenticate);
 
-router.get('/', getStudents);
-router.get('/:id', getStudent);
-router.post('/', authorize('SUPER_ADMIN', 'ADMIN'), createStudent);
-router.put('/:id', authorize('SUPER_ADMIN', 'ADMIN'), updateStudent);
-router.delete('/:id', authorize('SUPER_ADMIN', 'ADMIN'), deleteStudent);
+router.get('/', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), getStudents);
+router.get('/:id', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), getStudent);
+router.post('/', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), createStudent);
+router.put('/:id', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), updateStudent);
+router.delete('/:id', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), deleteStudent);
 
 export default router;

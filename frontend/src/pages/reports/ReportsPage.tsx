@@ -4,15 +4,15 @@ import PageHeader from '@/components/ui/PageHeader';
 
 const reportCards = [
   {
-    title: 'Class Results',
-    description: 'Process stream results by term, view rankings, and compare student averages.',
-    to: '/results',
+    title: 'Class Performance PDF',
+    description: 'Generate a printable class performance summary with rankings and subject averages.',
+    to: '/reports/class',
     icon: BarChart3,
   },
   {
     title: 'Student Report Cards',
-    description: 'Review student performance summaries after scores and results have been recorded.',
-    to: '/students',
+    description: 'Generate an individual student report card and export it as PDF from the browser.',
+    to: '/reports/student',
     icon: GraduationCap,
   },
 ];

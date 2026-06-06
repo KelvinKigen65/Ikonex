@@ -1,5 +1,5 @@
 import api from './axios';
-import type { Student } from '@/types';
+import type { Student, StudentDetailRecord } from '@/types';
 
 interface StudentsParams { page?: number; limit?: number; search?: string; streamId?: string; gender?: string; }
 
@@ -7,7 +7,7 @@ export const getStudents = (params?: StudentsParams) =>
   api.get<{ students: Student[]; total: number; pages: number }>('/students', { params });
 
 export const getStudent = (id: string) =>
-  api.get<{ student: Student }>(`/students/${id}`);
+  api.get<{ student: StudentDetailRecord }>(`/students/${id}`);
 
 export const createStudent = (data: Partial<Student>) =>
   api.post<{ student: Student }>('/students', data);

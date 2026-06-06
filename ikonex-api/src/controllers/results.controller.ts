@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { processStreamResults } from '../services/results.service';
+import {
+  generateClassPerformanceReport,
+  generateStudentReportCard,
+  processStreamResults,
+} from '../services/results.service';
 
 const prisma = new PrismaClient();
 
@@ -15,6 +19,52 @@ export const getResults = async (req: Request, res: Response, next: NextFunction
     );
     res.json({ results });
   } catch (err) { next(err); }
+};
+
+export const getStudentReportCard = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { studentId, term, academicYear } = req.query;
+    if (!studentId || !term || !academicYear) {
+      return res.status(400).json({ error: 'studentId, term, and academicYear are required' });
+    }
+
+    const reportCard = await generateStudentReportCard(
+      String(studentId),
+      String(term),
+      String(academicYear)
+    );
+
+    if (!reportCard) {
+      return res.status(404).json({ error: 'Student report card not found' });
+    }
+
+    res.json({ reportCard });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getClassReport = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { streamId, term, academicYear } = req.query;
+    if (!streamId || !term || !academicYear) {
+      return res.status(400).json({ error: 'streamId, term, and academicYear are required' });
+    }
+
+    const classReport = await generateClassPerformanceReport(
+      String(streamId),
+      String(term),
+      String(academicYear)
+    );
+
+    if (!classReport) {
+      return res.status(404).json({ error: 'Class report not found' });
+    }
+
+    res.json({ classReport });
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const getDashboardStats = async (_req: Request, res: Response, next: NextFunction) => {

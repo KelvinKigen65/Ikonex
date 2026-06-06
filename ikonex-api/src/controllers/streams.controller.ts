@@ -7,9 +7,10 @@ export const getStreams = async (req: Request, res: Response, next: NextFunction
   try {
     const { page = 1, limit = 20, search } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
+    const searchTerm = typeof search === 'string' ? search : undefined;
 
-    const where = search
-      ? { name: { contains: String(search), mode: 'insensitive' as const } }
+    const where = searchTerm
+      ? { name: { contains: searchTerm, mode: 'insensitive' as const } }
       : {};
 
     const [streams, total] = await Promise.all([
@@ -34,8 +35,11 @@ export const getStreams = async (req: Request, res: Response, next: NextFunction
 
 export const getStream = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) return res.status(400).json({ error: 'Stream id is required' });
+
     const stream = await prisma.classStream.findUnique({
-      where: { id: req.params.id },
+      where: { id },
       include: {
         classTeacher: { select: { id: true, firstName: true, lastName: true, email: true } },
         students: { where: { isActive: true }, orderBy: { lastName: 'asc' } },
@@ -65,8 +69,11 @@ export const createStream = async (req: Request, res: Response, next: NextFuncti
 
 export const updateStream = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) return res.status(400).json({ error: 'Stream id is required' });
+
     const stream = await prisma.classStream.update({
-      where: { id: req.params.id },
+      where: { id },
       data: req.body,
       include: { classTeacher: { select: { id: true, firstName: true, lastName: true } } },
     });
@@ -78,7 +85,10 @@ export const updateStream = async (req: Request, res: Response, next: NextFuncti
 
 export const deleteStream = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await prisma.classStream.delete({ where: { id: req.params.id } });
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) return res.status(400).json({ error: 'Stream id is required' });
+
+    await prisma.classStream.delete({ where: { id } });
     res.json({ message: 'Stream deleted successfully' });
   } catch (err) {
     next(err);

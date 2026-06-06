@@ -11,14 +11,28 @@ import studentRoutes from './routes/students.routes';
 import subjectRoutes from './routes/subjects.routes';
 import assessmentRoutes from './routes/assessments.routes';
 import resultRoutes from './routes/results.routes';
+import gradingScaleRoutes from './routes/gradingScales.routes';
 import { errorHandler } from './middleware/error.middleware';
 
 const app = express();
+const configuredOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
+const isAllowedDevOrigin = (origin: string) =>
+  /^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
 
 // Security
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin(origin, callback) {
+    if (!origin || configuredOrigins.includes(origin) || isAllowedDevOrigin(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin ${origin}`));
+  },
   credentials: true,
 }));
 
@@ -45,6 +59,7 @@ app.use('/api/students', studentRoutes);
 app.use('/api/subjects', subjectRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/results', resultRoutes);
+app.use('/api/grading-scales', gradingScaleRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);

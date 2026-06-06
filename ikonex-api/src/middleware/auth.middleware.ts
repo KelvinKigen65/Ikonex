@@ -7,7 +7,9 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     return res.status(401).json({ error: 'No token provided' });
 
   try {
-    const token = auth.split(' ')[1];
+    const token = auth.slice('Bearer '.length);
+    if (!token) return res.status(401).json({ error: 'No token provided' });
+
     const payload = verifyToken(token);
     (req as any).user = payload;
     next();

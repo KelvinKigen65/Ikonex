@@ -7,10 +7,10 @@ export const getAssessments = async (req: Request, res: Response, next: NextFunc
   try {
     const { subjectId, streamId, term, academicYear } = req.query;
     const where: any = {};
-    if (subjectId) where.subjectId = String(subjectId);
-    if (streamId) where.streamId = String(streamId);
-    if (term) where.term = String(term);
-    if (academicYear) where.academicYear = String(academicYear);
+    if (typeof subjectId === 'string') where.subjectId = subjectId;
+    if (typeof streamId === 'string') where.streamId = streamId;
+    if (typeof term === 'string') where.term = term;
+    if (typeof academicYear === 'string') where.academicYear = academicYear;
 
     const assessments = await prisma.assessment.findMany({
       where,
@@ -37,8 +37,11 @@ export const createAssessment = async (req: Request, res: Response, next: NextFu
 
 export const updateAssessment = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) return res.status(400).json({ error: 'Assessment id is required' });
+
     const assessment = await prisma.assessment.update({
-      where: { id: req.params.id },
+      where: { id },
       data: req.body,
     });
     res.json({ assessment });
@@ -47,7 +50,10 @@ export const updateAssessment = async (req: Request, res: Response, next: NextFu
 
 export const deleteAssessment = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await prisma.assessment.delete({ where: { id: req.params.id } });
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) return res.status(400).json({ error: 'Assessment id is required' });
+
+    await prisma.assessment.delete({ where: { id } });
     res.json({ message: 'Assessment deleted' });
   } catch (err) { next(err); }
 };
@@ -82,7 +88,11 @@ export const bulkSubmitScores = async (req: Request, res: Response, next: NextFu
 
 export const getScores = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { assessmentId } = req.params;
+    const assessmentId = Array.isArray(req.params.assessmentId)
+      ? req.params.assessmentId[0]
+      : req.params.assessmentId;
+    if (!assessmentId) return res.status(400).json({ error: 'Assessment id is required' });
+
     const scores = await prisma.score.findMany({
       where: { assessmentId },
       include: {

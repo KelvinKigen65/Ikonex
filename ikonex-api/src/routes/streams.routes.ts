@@ -6,10 +6,10 @@ import { authorize } from '../middleware/role.middleware';
 const router = Router();
 router.use(authenticate);
 
-router.get('/', getStreams);
-router.get('/:id', getStream);
-router.post('/', authorize('SUPER_ADMIN', 'ADMIN'), createStream);
-router.put('/:id', authorize('SUPER_ADMIN', 'ADMIN'), updateStream);
-router.delete('/:id', authorize('SUPER_ADMIN'), deleteStream);
+router.get('/', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), getStreams);
+router.get('/:id', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), getStream);
+router.post('/', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), createStream);
+router.put('/:id', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), updateStream);
+router.delete('/:id', authorize('SUPER_ADMIN', 'ADMIN', 'TEACHER'), deleteStream);
 
 export default router;

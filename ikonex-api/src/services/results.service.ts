@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { getGrade, getMeanGrade } from '../utils/grading';
+import { getGrade } from '../utils/grading';
 
 const prisma = new PrismaClient();
 
@@ -16,7 +16,7 @@ export interface StudentResult {
   position: number;
 }
 
-interface SubjectResult {
+export interface SubjectResult {
   subjectId: string;
   subjectName: string;
   score: number;
@@ -25,31 +25,89 @@ interface SubjectResult {
   position: number;
 }
 
+export interface StudentReportCard {
+  student: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    admissionNo: string;
+    streamName: string;
+    academicYear: string;
+  };
+  report: StudentResult & {
+    term: string;
+    academicYear: string;
+    totalStudents: number;
+    generatedAt: string;
+  };
+}
+
+export interface ClassPerformanceReport {
+  stream: {
+    id: string;
+    name: string;
+    academicYear: string;
+  };
+  term: string;
+  academicYear: string;
+  generatedAt: string;
+  totalStudents: number;
+  topPerformer: Pick<StudentResult, 'studentId' | 'studentName' | 'averageScore' | 'meanGrade' | 'position'> | null;
+  subjectPerformance: Array<{
+    subjectId: string;
+    subjectName: string;
+    averageScore: number;
+    highestScore: number;
+    lowestScore: number;
+  }>;
+  results: StudentResult[];
+}
+
+const getConfiguredScale = async () => {
+  const scaleRows = await prisma.gradingScale.findMany({
+    orderBy: { minScore: 'desc' },
+  });
+
+  if (scaleRows.length === 0) {
+    return undefined;
+  }
+
+  return scaleRows.map(scale => ({
+    min: scale.minScore,
+    max: scale.maxScore,
+    grade: scale.grade,
+    points: scale.points,
+    remarks: scale.remarks,
+  }));
+};
+
 export const processStreamResults = async (
   streamId: string,
   term: string,
   academicYear: string
 ): Promise<StudentResult[]> => {
+  const gradingScale = await getConfiguredScale();
+
   // Get all students in the stream
   const students = await prisma.student.findMany({
     where: { streamId, isActive: true },
     include: {
       scores: {
+        where: {
+          assessment: {
+            streamId,
+            term,
+            academicYear,
+          },
+        },
         include: {
           assessment: {
-            where: { streamId, term, academicYear },
             include: { subject: { select: { id: true, name: true } } },
           },
         },
       },
     },
     orderBy: { lastName: 'asc' },
-  });
-
-  // Get all subjects for this stream
-  const classSubjects = await prisma.classSubject.findMany({
-    where: { streamId },
-    include: { subject: true },
   });
 
   // Group scores by student and subject, calculating weighted average
@@ -59,7 +117,7 @@ export const processStreamResults = async (
     for (const score of student.scores) {
       const { assessment } = score;
       if (!assessment) continue;
-      const { subjectId, name: subjectName } = assessment.subject;
+      const { id: subjectId, name: subjectName } = assessment.subject;
       const pct = (score.marks / assessment.maxMarks) * 100;
 
       if (!subjectScores.has(subjectId)) {
@@ -75,7 +133,7 @@ export const processStreamResults = async (
 
     subjectScores.forEach((val, subjectId) => {
       const avgScore = val.weights > 0 ? val.total / val.weights : 0;
-      const { grade, points } = getGrade(avgScore);
+      const { grade, points } = getGrade(avgScore, gradingScale);
       subjects.push({ subjectId, subjectName: val.name, score: avgScore, grade, points });
       totalPoints += points;
     });
@@ -83,6 +141,7 @@ export const processStreamResults = async (
     const totalMarks = subjects.reduce((acc, s) => acc + s.score, 0);
     const averageScore = subjects.length > 0 ? totalMarks / subjects.length : 0;
     const meanPoints = subjects.length > 0 ? totalPoints / subjects.length : 0;
+    const meanGrade = getGrade(averageScore, gradingScale).grade;
 
     return {
       studentId: student.id,
@@ -93,7 +152,7 @@ export const processStreamResults = async (
       averageScore,
       totalPoints,
       meanPoints,
-      meanGrade: getMeanGrade(meanPoints),
+      meanGrade,
     };
   });
 
@@ -103,10 +162,16 @@ export const processStreamResults = async (
   let position = 1;
 
   for (let i = 0; i < sorted.length; i++) {
-    if (i > 0 && sorted[i].averageScore === sorted[i - 1].averageScore) {
-      withPositions.push({ ...sorted[i], position: withPositions[i - 1].position, subjects: [] });
+    const current = sorted[i];
+    if (!current) continue;
+
+    const previous = i > 0 ? sorted[i - 1] : undefined;
+    const previousRanked = i > 0 ? withPositions[i - 1] : undefined;
+
+    if (previous && previousRanked && current.averageScore === previous.averageScore) {
+      withPositions.push({ ...current, position: previousRanked.position, subjects: [] });
     } else {
-      withPositions.push({ ...sorted[i], position, subjects: [] });
+      withPositions.push({ ...current, position, subjects: [] });
     }
     position++;
   }
@@ -127,6 +192,10 @@ export const processStreamResults = async (
   // Build final with all positions
   return withPositions.map((sr, idx) => {
     const original = sorted[idx];
+    if (!original) {
+      return { ...sr, subjects: [] };
+    }
+
     const subjects: SubjectResult[] = original.subjects.map(sub => {
       const posArr = subjectPositions.get(sub.subjectId) || [];
       const pos = posArr.findIndex(e => e.studentId === sr.studentId) + 1;
@@ -134,4 +203,142 @@ export const processStreamResults = async (
     });
     return { ...sr, subjects };
   });
+};
+
+export const generateStudentReportCard = async (
+  studentId: string,
+  term: string,
+  academicYear: string
+): Promise<StudentReportCard | null> => {
+  const student = await prisma.student.findUnique({
+    where: { id: studentId },
+    include: {
+      classStream: true,
+    },
+  });
+
+  if (!student) {
+    return null;
+  }
+
+  const results = await processStreamResults(student.streamId, term, academicYear);
+  const report = results.find(result => result.studentId === studentId);
+
+  if (!report) {
+    return null;
+  }
+
+  await prisma.reportCard.upsert({
+    where: {
+      studentId_term_academicYear: {
+        studentId,
+        term,
+        academicYear,
+      },
+    },
+    update: {
+      totalMarks: report.totalMarks,
+      averageScore: report.averageScore,
+      grade: report.meanGrade,
+      position: report.position,
+      totalStudents: results.length,
+    },
+    create: {
+      studentId,
+      term,
+      academicYear,
+      totalMarks: report.totalMarks,
+      averageScore: report.averageScore,
+      grade: report.meanGrade,
+      position: report.position,
+      totalStudents: results.length,
+    },
+  });
+
+  return {
+    student: {
+      id: student.id,
+      firstName: student.firstName,
+      lastName: student.lastName,
+      admissionNo: student.admissionNo,
+      streamName: student.classStream.name,
+      academicYear: student.classStream.academicYear,
+    },
+    report: {
+      ...report,
+      term,
+      academicYear,
+      totalStudents: results.length,
+      generatedAt: new Date().toISOString(),
+    },
+  };
+};
+
+export const generateClassPerformanceReport = async (
+  streamId: string,
+  term: string,
+  academicYear: string
+): Promise<ClassPerformanceReport | null> => {
+  const stream = await prisma.classStream.findUnique({
+    where: { id: streamId },
+  });
+
+  if (!stream) {
+    return null;
+  }
+
+  const results = await processStreamResults(streamId, term, academicYear);
+  const subjectMap = new Map<string, { subjectName: string; scores: number[] }>();
+
+  for (const result of results) {
+    for (const subject of result.subjects) {
+      const existing = subjectMap.get(subject.subjectId);
+      if (existing) {
+        existing.scores.push(subject.score);
+      } else {
+        subjectMap.set(subject.subjectId, {
+          subjectName: subject.subjectName,
+          scores: [subject.score],
+        });
+      }
+    }
+  }
+
+  const subjectPerformance = Array.from(subjectMap.entries())
+    .map(([subjectId, details]) => {
+      const total = details.scores.reduce((sum, score) => sum + score, 0);
+      return {
+        subjectId,
+        subjectName: details.subjectName,
+        averageScore: details.scores.length ? total / details.scores.length : 0,
+        highestScore: details.scores.length ? Math.max(...details.scores) : 0,
+        lowestScore: details.scores.length ? Math.min(...details.scores) : 0,
+      };
+    })
+    .sort((a, b) => b.averageScore - a.averageScore);
+
+  const [topPerformer] = results;
+
+  return {
+    stream: {
+      id: stream.id,
+      name: stream.name,
+      academicYear: stream.academicYear,
+    },
+    term,
+    academicYear,
+    generatedAt: new Date().toISOString(),
+    totalStudents: results.length,
+    topPerformer: topPerformer
+      ? {
+          studentId: topPerformer.studentId,
+          studentName: topPerformer.studentName,
+          averageScore: topPerformer.averageScore,
+          meanGrade: topPerformer.meanGrade,
+          position: topPerformer.position,
+        }
+      : null,
+    subjectPerformance,
+    results,
+  };
 };

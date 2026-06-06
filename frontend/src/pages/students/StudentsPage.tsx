@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 const StudentsPage = () => {
   const { user } = useAuth();
   const navigate  = useNavigate();
-  const canEdit   = user?.role !== 'TEACHER';
+  const canEdit   = !!user && user.role !== 'STUDENT';
 
   const [students, setStudents] = useState<Student[]>([]);
   const [streams, setStreams]   = useState<ClassStream[]>([]);
