@@ -21,8 +21,9 @@ const LoginPage = () => {
       toast.success('Welcome back!');
       navigate('/');
     } catch (err: any) {
+      const apiUrl = import.meta.env.VITE_API_URL || '/api';
       const message = err.response?.data?.error
-        || (err.request ? 'API is unreachable. Start the backend and database.' : 'Login failed');
+        || (err.request ? `Cannot reach API at ${apiUrl}. Restart the frontend or check CORS/network.` : 'Login failed');
       toast.error(message);
     } finally {
       setLoading(false);
