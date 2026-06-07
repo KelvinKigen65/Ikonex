@@ -50,7 +50,25 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Health check
+app.get('/', (_, res) => res.json({
+  name: 'Ikonex API',
+  status: 'ok',
+  health: '/health',
+  apiBase: '/api',
+}));
 app.get('/health', (_, res) => res.json({ status: 'ok', timestamp: new Date() }));
+app.get('/api', (_, res) => res.json({
+  name: 'Ikonex API',
+  routes: [
+    '/api/auth',
+    '/api/streams',
+    '/api/students',
+    '/api/subjects',
+    '/api/assessments',
+    '/api/results',
+    '/api/grading-scales',
+  ],
+}));
 
 // Routes
 app.use('/api/auth', authRoutes);
