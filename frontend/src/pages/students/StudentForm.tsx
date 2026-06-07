@@ -52,11 +52,16 @@ const StudentForm = () => {
 
   const onSubmit = async (data: FormData) => {
     try {
+      const payload = {
+        ...data,
+        dateOfBirth: new Date(`${data.dateOfBirth}T00:00:00.000Z`).toISOString(),
+      };
+
       if (isEdit && id) {
-        await updateStudent(id, data);
+        await updateStudent(id, payload);
         toast.success('Student updated');
       } else {
-        await createStudent(data);
+        await createStudent(payload);
         toast.success('Student registered');
       }
       navigate('/students');

@@ -2,6 +2,50 @@ import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
+const studentFields = [
+  'admissionNo',
+  'firstName',
+  'lastName',
+  'gender',
+  'dateOfBirth',
+  'parentName',
+  'parentContact',
+  'email',
+  'address',
+  'photoUrl',
+  'streamId',
+] as const;
+
+const badRequest = (message: string) => {
+  const error = new Error(message) as Error & { status?: number };
+  error.status = 400;
+  return error;
+};
+
+const normalizeStudentData = (body: Record<string, unknown>) => {
+  const data: Record<string, unknown> = {};
+
+  studentFields.forEach(field => {
+    if (field in body) data[field] = body[field];
+  });
+
+  if (typeof data.dateOfBirth === 'string') {
+    const value = data.dateOfBirth.trim();
+    const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00.000Z` : value);
+
+    if (Number.isNaN(date.getTime())) {
+      throw badRequest('Enter a valid date of birth');
+    }
+
+    data.dateOfBirth = date;
+  }
+
+  if (data.email === '') data.email = null;
+  if (data.address === '') data.address = null;
+  if (data.photoUrl === '') data.photoUrl = null;
+
+  return data;
+};
 
 export const getStudents = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -62,7 +106,7 @@ export const getStudent = async (req: Request, res: Response, next: NextFunction
 export const createStudent = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const student = await prisma.student.create({
-      data: req.body,
+      data: normalizeStudentData(req.body) as any,
       include: { classStream: { select: { id: true, name: true } } },
     });
     res.status(201).json({ student });
@@ -78,7 +122,7 @@ export const updateStudent = async (req: Request, res: Response, next: NextFunct
 
     const student = await prisma.student.update({
       where: { id },
-      data: req.body,
+      data: normalizeStudentData(req.body),
       include: { classStream: { select: { id: true, name: true } } },
     });
     res.json({ student });
