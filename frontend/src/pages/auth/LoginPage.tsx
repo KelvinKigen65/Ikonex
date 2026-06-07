@@ -6,8 +6,8 @@ import { login } from '@/api/auth.api';
 import toast from 'react-hot-toast';
 
 const LoginPage = () => {
-  const [email, setEmail]       = useState('admin@ikonex.ac.ke');
-  const [password, setPassword] = useState('Admin@1234');
+  const [email, setEmail]       = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
   const { login: setAuth }      = useAuth();
   const navigate                = useNavigate();
@@ -49,7 +49,7 @@ const LoginPage = () => {
               value={email}
               onChange={e => setEmail(e.target.value)}
               className="input"
-              placeholder="admin@ikonex.ac.ke"
+              placeholder="you@example.com"
               required
             />
           </div>
@@ -69,12 +69,6 @@ const LoginPage = () => {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        <div className="mt-6 p-4 bg-gray-50 rounded-xl text-xs text-gray-500">
-          <p className="font-medium mb-1">Demo Credentials:</p>
-          <p>Admin: admin@ikonex.ac.ke / Admin@1234</p>
-          <p>Teacher: teacher@ikonex.ac.ke / Teacher@1234</p>
-        </div>
 
         <div className="mt-5 text-sm text-center text-gray-500">
           Need an account?{' '}
