@@ -21,19 +21,21 @@ const StudentsPage = () => {
   const [page, setPage]         = useState(1);
   const [search, setSearch]     = useState('');
   const [streamId, setStreamId] = useState('');
+  const visibleStudents = Array.isArray(students) ? students : [];
+  const visibleStreams = Array.isArray(streams) ? streams : [];
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await getStudents({ page, search, streamId: streamId || undefined });
-      setStudents(res.data.students);
-      setTotal(res.data.total);
+      setStudents(res.data.students ?? []);
+      setTotal(res.data.total ?? 0);
     } catch { toast.error('Failed to load students'); }
     finally { setLoading(false); }
   }, [page, search, streamId]);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { getStreams().then(r => setStreams(r.data.streams)).catch(() => {}); }, []);
+  useEffect(() => { getStreams().then(r => setStreams(r.data.streams ?? [])).catch(() => {}); }, []);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Deactivate this student?')) return;
@@ -64,7 +66,7 @@ const StudentsPage = () => {
         </div>
         <select className="input sm:w-48" value={streamId} onChange={e => { setStreamId(e.target.value); setPage(1); }}>
           <option value="">All Streams</option>
-          {streams.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          {visibleStreams.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
       </div>
 
@@ -82,14 +84,14 @@ const StudentsPage = () => {
             <tbody>
               {loading ? (
                 <tr><td colSpan={7} className="text-center py-12 text-gray-400">Loading...</td></tr>
-              ) : students.length === 0 ? (
+              ) : visibleStudents.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-12">
                     <Users size={40} className="mx-auto mb-2 text-gray-300" />
                     <p className="text-gray-400">No students found</p>
                   </td>
                 </tr>
-              ) : students.map(s => (
+              ) : visibleStudents.map(s => (
                 <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 font-mono text-xs text-gray-600">{s.admissionNo}</td>
                   <td className="px-4 py-3">

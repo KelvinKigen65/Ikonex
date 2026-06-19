@@ -113,6 +113,7 @@ const DashboardPage = () => {
     { grade: 'A', count: 12 }, { grade: 'B', count: 28 }, { grade: 'C', count: 35 },
     { grade: 'D', count: 18 }, { grade: 'E', count: 7 },
   ];
+  const summary = stats?.stats;
 
   return (
     <div className="space-y-6">
@@ -123,9 +124,9 @@ const DashboardPage = () => {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard title="Total Students" value={stats?.stats.totalStudents ?? 0} icon={Users} color="blue" />
-        <StatCard title="Class Streams"  value={stats?.stats.totalStreams ?? 0}  icon={School} color="green" />
-        <StatCard title="Subjects"       value={stats?.stats.totalSubjects ?? 0} icon={BookOpen} color="purple" />
+        <StatCard title="Total Students" value={summary?.totalStudents ?? 0} icon={Users} color="blue" />
+        <StatCard title="Class Streams"  value={summary?.totalStreams ?? 0}  icon={School} color="green" />
+        <StatCard title="Subjects"       value={summary?.totalSubjects ?? 0} icon={BookOpen} color="purple" />
         <StatCard title="Avg Performance" value="72.4%" icon={TrendingUp} color="orange" change="3.2% this term" positive />
       </div>
 

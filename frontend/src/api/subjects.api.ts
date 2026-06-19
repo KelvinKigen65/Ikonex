@@ -1,8 +1,11 @@
 import api from './axios';
+import { normalizeCollection } from './normalize';
 import type { Subject } from '@/types';
 
 export const getSubjects = (params?: { search?: string; status?: string }) =>
-  api.get<{ subjects: Subject[] }>('/subjects', { params });
+  api
+    .get<Subject[] | { subjects: Subject[]; total: number; pages: number }>('/subjects/', { params })
+    .then(res => normalizeCollection(res, 'subjects'));
 
 export const createSubject = (data: Partial<Subject>) =>
   api.post<{ subject: Subject }>('/subjects', data);

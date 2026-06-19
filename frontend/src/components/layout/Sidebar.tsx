@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, BookOpen, School, ClipboardList,
-  BarChart3, FileText, X, GraduationCap, SlidersHorizontal
+  BarChart3, FileText, X, SlidersHorizontal
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { formatRoleLabel } from '@/lib/roles';
@@ -50,9 +50,11 @@ const Sidebar = ({ isOpen, onClose }: Props) => {
       {/* Logo */}
       <div className="flex items-center justify-between px-6 py-6 border-b border-white/10 bg-white/5 backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center shadow-lg shadow-accent-500/20">
-            <GraduationCap size={21} className="text-white" />
-          </div>
+          <img
+            src="/mortarboard.png"
+            alt="Ikonex Academy"
+            className="h-11 w-11 object-contain"
+          />
           <div>
             <p className="font-bold text-base leading-none tracking-wide text-white">Ikonex</p>
             <p className="text-xs text-primary-200/90 mt-1">Academy SMS</p>

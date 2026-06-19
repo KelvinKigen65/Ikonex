@@ -3,9 +3,14 @@ from .models import User, Student, ClassStream, Subject, Assessment, Score, Grad
 
 
 class UserSerializer(serializers.ModelSerializer):
+    firstName = serializers.CharField(source='first_name', read_only=True)
+    lastName = serializers.CharField(source='last_name', read_only=True)
+    isActive = serializers.BooleanField(source='is_active', read_only=True)
+    createdAt = serializers.DateTimeField(source='date_joined', read_only=True)
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'first_name', 'last_name', 'email', 'role')
+        fields = ('id', 'username', 'email', 'firstName', 'lastName', 'role', 'isActive', 'createdAt')
 
 
 class StreamSerializer(serializers.ModelSerializer):

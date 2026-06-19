@@ -20,9 +20,16 @@ const Navbar = ({ onMenuClick }: Props) => {
         <button onClick={onMenuClick} className="lg:hidden text-gray-500 hover:text-gray-700">
           <Menu size={22} />
         </button>
-        <h1 className="text-lg font-semibold text-gray-800">
-          Ikonex Academy
-        </h1>
+        <div className="flex items-center gap-2">
+          <img
+            src="/mortarboard.png"
+            alt="Ikonex Academy"
+            className="h-8 w-8 object-contain"
+          />
+          <h1 className="text-lg font-semibold text-gray-800">
+            Ikonex Academy
+          </h1>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">

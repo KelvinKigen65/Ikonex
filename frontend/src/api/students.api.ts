@@ -1,10 +1,13 @@
 import api from './axios';
+import { normalizeCollection } from './normalize';
 import type { Student, StudentDetailRecord } from '@/types';
 
 interface StudentsParams { page?: number; limit?: number; search?: string; streamId?: string; gender?: string; }
 
 export const getStudents = (params?: StudentsParams) =>
-  api.get<{ students: Student[]; total: number; pages: number }>('/students', { params });
+  api
+    .get<Student[] | { students: Student[]; total: number; pages: number }>('/students/', { params })
+    .then(res => normalizeCollection(res, 'students'));
 
 export const getStudent = (id: string) =>
   api.get<{ student: StudentDetailRecord }>(`/students/${id}`);

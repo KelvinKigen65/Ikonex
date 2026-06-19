@@ -1,8 +1,11 @@
 import api from './axios';
+import { normalizeCollection } from './normalize';
 import type { Assessment, Score } from '@/types';
 
 export const getAssessments = (params?: { subjectId?: string; streamId?: string; term?: string; academicYear?: string }) =>
-  api.get<{ assessments: Assessment[] }>('/assessments', { params });
+  api
+    .get<Assessment[] | { assessments: Assessment[]; total: number; pages: number }>('/assessments/', { params })
+    .then(res => normalizeCollection(res, 'assessments'));
 
 export const createAssessment = (data: Partial<Assessment>) =>
   api.post<{ assessment: Assessment }>('/assessments', data);

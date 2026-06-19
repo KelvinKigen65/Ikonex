@@ -1,8 +1,11 @@
 import api from './axios';
+import { normalizeCollection } from './normalize';
 import type { ClassStream } from '@/types';
 
 export const getStreams = (params?: { page?: number; search?: string }) =>
-  api.get<{ streams: ClassStream[]; total: number }>('/streams', { params });
+  api
+    .get<ClassStream[] | { streams: ClassStream[]; total: number; pages: number }>('/streams/', { params })
+    .then(res => normalizeCollection(res, 'streams'));
 
 export const getStream = (id: string) =>
   api.get<{ stream: ClassStream }>(`/streams/${id}`);

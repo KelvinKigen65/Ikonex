@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { GraduationCap, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { login } from '@/api/auth.api';
 import toast from 'react-hot-toast';
@@ -22,7 +22,11 @@ const LoginPage = () => {
       navigate('/');
     } catch (err: any) {
       const apiUrl = import.meta.env.VITE_API_URL || '/api';
-      const message = err.response?.data?.error
+      const data = err.response?.data;
+      const fieldMessage = data && typeof data === 'object'
+        ? Object.values(data).flat().join(' ')
+        : '';
+      const message = data?.detail || data?.error || fieldMessage
         || (err.request ? `Cannot reach API at ${apiUrl}. Restart the frontend or check CORS/network.` : 'Login failed');
       toast.error(message);
     } finally {
@@ -35,9 +39,11 @@ const LoginPage = () => {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-primary-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-            <GraduationCap size={32} className="text-white" />
-          </div>
+          <img
+            src="/mortarboard.png"
+            alt="Ikonex Academy"
+            className="mb-4 h-24 w-24 object-contain"
+          />
           <h1 className="text-2xl font-bold text-gray-900">Ikonex Academy</h1>
           <p className="text-gray-500 text-sm mt-1">Student Management System</p>
         </div>
