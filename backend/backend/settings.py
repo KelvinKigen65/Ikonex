@@ -33,7 +33,7 @@ def load_local_env(env_path):
 load_local_env(BASE_DIR / '.env')
 
 
-# Quick-start development settings - unsuitable for production
+
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
